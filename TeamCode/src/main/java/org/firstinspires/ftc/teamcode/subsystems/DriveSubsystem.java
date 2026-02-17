@@ -17,13 +17,18 @@ public class DriveSubsystem {
     DcMotorEx frontLeft, frontRight, rearLeft, rearRight;
     boolean isRobotAtTarget = false;
 
+    /**
+     * Assumes Drive Motors are configured as frontLeft, frontRight, rearLeft, and rearRight
+     * </p>
+     * Assumes Pinpoint is configured as pinpoint
+     */
     public DriveSubsystem(Telemetry telemetry, HardwareMap hardwareMap) {
         this.telemetry = telemetry;
 
-        frontLeft = hardwareMap.get(DcMotorEx.class, "FL");
-        frontRight = hardwareMap.get(DcMotorEx.class, "FR");
-        rearLeft = hardwareMap.get(DcMotorEx.class, "BL");
-        rearRight = hardwareMap.get(DcMotorEx.class, "BR");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
+        rearLeft = hardwareMap.get(DcMotorEx.class, "rearLeft");
+        rearRight = hardwareMap.get(DcMotorEx.class, "rearRight");
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -47,6 +52,10 @@ public class DriveSubsystem {
 
     public void updateOdometry() {
         pinpoint.update();
+    }
+
+    public void seedPose(double x, double y, double degrees) {
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, x, y, AngleUnit.DEGREES, degrees));
     }
 
     public void driveToPose (double x, double y, double a) {

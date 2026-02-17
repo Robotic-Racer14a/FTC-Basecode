@@ -21,7 +21,7 @@ public class BlueClose extends TurtleOpMode {
 
     @Override
     public void init() {
-        drive.pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, -60, -38, AngleUnit.DEGREES, 46));
+       drive.seedPose( -60, -38, 46);
     }
 
     @Override
