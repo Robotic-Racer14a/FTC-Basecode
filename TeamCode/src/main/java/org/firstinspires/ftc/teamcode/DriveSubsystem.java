@@ -1,61 +1,25 @@
 package org.firstinspires.ftc.teamcode;
 
-import static android.os.SystemClock.sleep;
-
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@Autonomous
-public class RedClose extends OpMode {
-
-    DcMotorEx frontLeft, frontRight, rearLeft, rearRight, shootMotor;
-    CRServo leftUnicorn, rightUnicorn;
+public class DriveSubsystem {
+    Telemetry telemetry;
     GoBildaPinpointDriver pinpoint;
-    int step = 0;
+    DcMotorEx frontLeft, frontRight, rearLeft, rearRight;
+    boolean isRobotAtTarget = false;
 
-    @Override
-    public void init() {
-        setUpConfig();
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, -60, 38, AngleUnit.DEGREES, -46));
-    }
+    public DriveSubsystem(Telemetry telemetry, HardwareMap hardwareMap) {
+        this.telemetry = telemetry;
 
-    @Override
-    public void loop() {
-
-        pinpoint.update();
-        telemetry.addLine("Step: " + step);
-        telemetry.addLine("CurrentPose: \n\tX: " + pinpoint.getPosition().getX(DistanceUnit.INCH) + "\n\tY: "  + pinpoint.getPosition().getY(DistanceUnit.INCH)+ "\n\tA: "  + pinpoint.getPosition().getHeading(AngleUnit.DEGREES));
-
-        switch (step) {
-
-            case 0:
-                shoot();
-                step = 10;
-                break;
-
-            case 10:
-                if (driveToPose(-60, 20, 90)) {
-                    step = 20;
-                }
-                break;
-
-
-        }
-
-
-
-    }
-
-    public void setUpConfig() {
         frontLeft = hardwareMap.get(DcMotorEx.class, "FL");
         frontRight = hardwareMap.get(DcMotorEx.class, "FR");
         rearLeft = hardwareMap.get(DcMotorEx.class, "BL");
@@ -72,22 +36,6 @@ public class RedClose extends OpMode {
         rearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
-        shootMotor = hardwareMap.get(DcMotorEx.class, "lw");
-
-        shootMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        shootMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-
-
-
-        leftUnicorn = hardwareMap.get(CRServo.class, "LeftUnicorn");
-        rightUnicorn = hardwareMap.get(CRServo.class, "RightUnicorn");
-
-        leftUnicorn.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightUnicorn.setDirection(DcMotorSimple.Direction.REVERSE);
-
-
-
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         pinpoint.setOffsets(-5.5, -5, DistanceUnit.INCH);
@@ -97,7 +45,7 @@ public class RedClose extends OpMode {
 
     }
 
-    private boolean driveToPose (double x, double y, double a) {
+    public void driveToPose (double x, double y, double a) {
         Pose2D targetPose = new Pose2D(DistanceUnit.INCH, x, y, AngleUnit.DEGREES, a), currentPose = pinpoint.getPosition();
 
         //Figure out the distance away from end pose
@@ -135,10 +83,14 @@ public class RedClose extends OpMode {
 
         if (distanceAway < 1 && Math.abs(currentAngle - targetAngle) < 5) {
             fieldCentricDrive(0, 0, 0);
-            return true;
+            isRobotAtTarget = true;
         } else {
-            return false;
+            isRobotAtTarget = false;
         }
+    }
+
+    public boolean isRobotAtTarget() {
+        return isRobotAtTarget;
     }
 
     private double pidCalculate(double p, double i, double d, double currentPoint, double setpoint) {
@@ -149,7 +101,7 @@ public class RedClose extends OpMode {
     }
 
     // This routine drives the robot field relative
-    private void fieldCentricDrive(double forward, double right, double rotate) {
+    public void fieldCentricDrive(double forward, double right, double rotate) {
         // First, convert direction being asked to drive to polar coordinates
         double theta = Math.atan2(forward, right);
         double r = Math.hypot(right, forward);
@@ -166,7 +118,7 @@ public class RedClose extends OpMode {
         robotCentricDrive(newForward, newRight, rotate);
     }
 
-    private void robotCentricDrive(double forward, double right, double rotate) {
+    public void robotCentricDrive(double forward, double right, double rotate) {
         // This calculates the power needed for each wheel based on the amount of forward,
         // strafe right, and rotate
         double frontLeftPower = forward + right + rotate;
@@ -192,30 +144,5 @@ public class RedClose extends OpMode {
         frontRight.setPower(maxSpeed * (frontRightPower / maxPower));
         rearLeft.setPower(maxSpeed * (backLeftPower / maxPower));
         rearRight.setPower(maxSpeed * (backRightPower / maxPower));
-    }
-
-
-    private void shoot () {
-
-        shootMotor.setPower(0.6);
-        sleep(5000);
-        leftUnicorn.setPower(1);
-        rightUnicorn.setPower(1);
-        sleep(500);
-        leftUnicorn.setPower(-0.2);
-        rightUnicorn.setPower(0.2);
-        sleep(2000);
-        leftUnicorn.setPower(1);
-        rightUnicorn.setPower(1);
-        sleep(500);
-        leftUnicorn.setPower(-0.2);
-        rightUnicorn.setPower(0.2);
-        sleep(2000);
-        leftUnicorn.setPower(1);
-        rightUnicorn.setPower(1);
-        sleep(2000);
-        leftUnicorn.setPower(0);
-        rightUnicorn.setPower(0);
-        shootMotor.setPower(0);
     }
 }
